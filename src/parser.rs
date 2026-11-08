@@ -8,7 +8,9 @@
  *
  * Constants <identifier>: a, b, term, c1
  * Variables ?<identifier>: ?x, ?y
- * Functions <identifier|operator>(arg1, arg2, ...): f(a, ?x), myfunction(), +(1, 2)
+ * Functions <identifier|operator>(term1, term2, ...): f(a, ?x), myfunction(), +(1, 2)
+ *
+ * In this implementation, constants and functions are treated using the same type. That is, constants are functions of arity 0.
  */
 use crate::syntax::*;
 
@@ -20,30 +22,16 @@ pub fn parse_term(term: &str) -> Result<Term, ()> {
         return Err(());
     }
 
-    // If the term contains a (, this term is guaranteed to be a function.
-    // Handle variable and constants first, since they're easier
-    if !term.contains('(') {
-        let mut term_to_validate = term;
-        let is_var = term.starts_with('?');
-
-        // Handle variables, but "?" is not a valid variable
-        if is_var {
-            term_to_validate = &term[1..];
-        }
-
-        if term_to_validate.is_empty()
-            || term_to_validate
+    if term.starts_with('?') {
+        if term.len() == 1
+            || term[1..]
                 .chars()
                 .any(|c| !c.is_ascii_alphanumeric() && c != '_')
         {
             return Err(());
         }
 
-        return Ok(if is_var {
-            Term::Variable(term.to_string())
-        } else {
-            Term::Constant(term.to_string())
-        });
+        return Ok(Term::Variable(term.to_string()));
     }
 
     if term.starts_with('(') {
@@ -55,8 +43,12 @@ pub fn parse_term(term: &str) -> Result<Term, ()> {
     let mut iden_len = 0;
     let mut must_be_paren = false;
 
+    let mut paren_depth = 0;
+
     for term_char in &mut chars {
         if term_char == '(' {
+            paren_depth = 1;
+            must_be_paren = false;
             break;
         }
 
@@ -81,10 +73,12 @@ pub fn parse_term(term: &str) -> Result<Term, ()> {
         }
     }
 
+    if must_be_paren {
+        return Err(());
+    }
+
     // term_char should now be after that initial (
     let mut operands = Vec::new();
-
-    let mut paren_depth = 1;
 
     let mut operand_start = iden_len + 1;
     let mut operand_end = operand_start;
@@ -108,7 +102,10 @@ pub fn parse_term(term: &str) -> Result<Term, ()> {
 
         if operand_complete {
             // Don't do anything if this is a no-arg function call
-            if operands.is_empty() && paren_depth == 0 && term[operand_start..operand_end].trim().is_empty() {
+            if operands.is_empty()
+                && paren_depth == 0
+                && term[operand_start..operand_end].trim().is_empty()
+            {
                 break;
             }
 

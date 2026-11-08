@@ -1,8 +1,7 @@
 use std::fmt;
 
-#[derive(PartialEq, Debug)]
+#[derive(PartialEq, Debug, Clone)]
 pub enum Term {
-    Constant(String),
     Variable(String),
     Function(String, Vec<Term>),
 }
@@ -15,7 +14,8 @@ pub struct RewriteRule {
 impl fmt::Display for Term {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Term::Constant(name) | Term::Variable(name) => write!(f, "{}", name),
+            Term::Variable(name) => write!(f, "{}", name),
+            Term::Function(name, operands) if operands.is_empty() => write!(f, "{}", name),
             Term::Function(name, operands) => {
                 write!(f, "{name}(")?;
                 for (i, operand) in operands.iter().enumerate() {

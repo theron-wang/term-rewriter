@@ -2,23 +2,29 @@ use term_rewriter::{parser::parse_term, syntax::Term};
 
 #[test]
 fn assert_valid_constants() {
-    assert_eq!(parse_term("a").unwrap(), Term::Constant(String::from("a")));
+    assert_eq!(
+        parse_term("a").unwrap(),
+        Term::Function("a".to_string(), vec![])
+    );
     assert_eq!(
         parse_term("_abcABC_123").unwrap(),
-        Term::Constant(String::from("_abcABC_123"))
+        Term::Function("_abcABC_123".to_string(), vec![])
     );
-    assert_eq!(parse_term("1").unwrap(), Term::Constant(String::from("1")));
+    assert_eq!(
+        parse_term("1").unwrap(),
+        Term::Function("1".to_string(), vec![])
+    );
     assert_eq!(
         parse_term("c1").unwrap(),
-        Term::Constant(String::from("c1"))
+        Term::Function("c1".to_string(), vec![])
     );
     assert_eq!(
         parse_term("term").unwrap(),
-        Term::Constant(String::from("term"))
+        Term::Function("term".to_string(), vec![])
     );
     assert_eq!(
         parse_term("  my_term   ").unwrap(),
-        Term::Constant(String::from("my_term"))
+        Term::Function("my_term".to_string(), vec![])
     );
 }
 
@@ -33,29 +39,23 @@ fn assert_malformed_constants() {
 
 #[test]
 fn assert_valid_variables() {
-    assert_eq!(
-        parse_term("?a").unwrap(),
-        Term::Variable(String::from("?a"))
-    );
+    assert_eq!(parse_term("?a").unwrap(), Term::Variable("?a".to_string()));
     assert_eq!(
         parse_term("?_abcABC_123").unwrap(),
-        Term::Variable(String::from("?_abcABC_123"))
+        Term::Variable("?_abcABC_123".to_string())
     );
-    assert_eq!(
-        parse_term("?1").unwrap(),
-        Term::Variable(String::from("?1"))
-    );
+    assert_eq!(parse_term("?1").unwrap(), Term::Variable("?1".to_string()));
     assert_eq!(
         parse_term("?c1").unwrap(),
-        Term::Variable(String::from("?c1"))
+        Term::Variable("?c1".to_string())
     );
     assert_eq!(
         parse_term("?term").unwrap(),
-        Term::Variable(String::from("?term"))
+        Term::Variable("?term".to_string())
     );
     assert_eq!(
         parse_term("  ?my_term   ").unwrap(),
-        Term::Variable(String::from("?my_term"))
+        Term::Variable("?my_term".to_string())
     );
 }
 
@@ -73,60 +73,63 @@ fn assert_malformed_variables() {
 fn assert_valid_functions() {
     assert_eq!(
         parse_term("f()").unwrap(),
-        Term::Function(String::from("f"), vec![])
+        Term::Function("f".to_string(), vec![])
     );
     assert_eq!(
         parse_term("f( )").unwrap(),
-        Term::Function(String::from("f"), vec![])
+        Term::Function("f".to_string(), vec![])
     );
     assert_eq!(
         parse_term("-()").unwrap(),
-        Term::Function(String::from("-"), vec![])
+        Term::Function("-".to_string(), vec![])
     );
     assert_eq!(
         parse_term("/()").unwrap(),
-        Term::Function(String::from("/"), vec![])
+        Term::Function("/".to_string(), vec![])
     );
     assert_eq!(
         parse_term("*()").unwrap(),
-        Term::Function(String::from("*"), vec![])
+        Term::Function("*".to_string(), vec![])
     );
     assert_eq!(
         parse_term("+(1, 2)").unwrap(),
         Term::Function(
-            String::from("+"),
+            "+".to_string(),
             vec![
-                Term::Constant(String::from("1")),
-                Term::Constant(String::from("2"))
+                Term::Function("1".to_string(), vec![]),
+                Term::Function("2".to_string(), vec![])
             ]
         )
     );
     assert_eq!(
         parse_term("my_func(?x, const)").unwrap(),
         Term::Function(
-            String::from("my_func"),
+            "my_func".to_string(),
             vec![
-                Term::Variable(String::from("?x")),
-                Term::Constant(String::from("const"))
+                Term::Variable("?x".to_string()),
+                Term::Function("const".to_string(), vec![])
             ]
         )
     );
     assert_eq!(
         parse_term("my_func(?x)").unwrap(),
         Term::Function(
-            String::from("my_func"),
-            vec![Term::Variable(String::from("?x"))]
+            "my_func".to_string(),
+            vec![Term::Variable("?x".to_string())]
         )
     );
     assert_eq!(
         parse_term("my_func(nested(+(1), a))").unwrap(),
         Term::Function(
-            String::from("my_func"),
+            "my_func".to_string(),
             vec![Term::Function(
-                String::from("nested"),
+                "nested".to_string(),
                 vec![
-                    Term::Function(String::from("+"), vec![Term::Constant(String::from("1"))]),
-                    Term::Constant(String::from("a"))
+                    Term::Function(
+                        "+".to_string(),
+                        vec![Term::Function("1".to_string(), vec![])]
+                    ),
+                    Term::Function("a".to_string(), vec![])
                 ]
             )]
         )
@@ -134,10 +137,10 @@ fn assert_valid_functions() {
     assert_eq!(
         parse_term("  my_func   (   ?x, a     )   ").unwrap(),
         Term::Function(
-            String::from("my_func"),
+            "my_func".to_string(),
             vec![
-                Term::Variable(String::from("?x")),
-                Term::Constant(String::from("a"))
+                Term::Variable("?x".to_string()),
+                Term::Function("a".to_string(), vec![])
             ]
         )
     );
