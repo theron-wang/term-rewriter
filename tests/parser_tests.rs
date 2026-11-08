@@ -1,4 +1,4 @@
-use term_rewriter::{parser::parse_term, syntax::Term};
+use term_rewriter::{parser::parse_term, terms::Term};
 
 #[test]
 fn assert_valid_constants() {

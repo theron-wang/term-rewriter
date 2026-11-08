@@ -1,5 +1,5 @@
 use std::collections::HashMap;
-use term_rewriter::{matching::match_term, parser::parse_term, syntax::Term};
+use term_rewriter::{matching::match_term, parser::parse_term, terms::Term};
 
 /// Helper method to simplify the creation of hashmaps in assert_eq! calls in this testing file.
 fn map_to<'a>(mappings: Vec<(&str, &'a Term)>) -> Option<HashMap<String, &'a Term>> {

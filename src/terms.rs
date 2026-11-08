@@ -6,11 +6,6 @@ pub enum Term {
     Function(String, Vec<Term>),
 }
 
-pub struct RewriteRule {
-    pub lhs: Term,
-    pub rhs: Term,
-}
-
 impl fmt::Display for Term {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {

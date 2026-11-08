@@ -12,7 +12,7 @@
  *
  * In this implementation, constants and functions are treated using the same type. That is, constants are functions of arity 0.
  */
-use crate::syntax::*;
+use crate::terms::*;
 
 /// Recursively parses a term from an &str. Assumes ASCII-only inputs for simplicity.
 pub fn parse_term(term: &str) -> Result<Term, ()> {

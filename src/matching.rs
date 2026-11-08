@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::iter::zip;
 
-use crate::syntax::Term;
+use crate::terms::Term;
 
 /// Returns a mapping between variables in the pattern, to terms in the provided term. Returns None when a match is impossible.
 pub fn match_term<'a>(pattern: &Term, term: &'a Term) -> Option<HashMap<String, &'a Term>> {
