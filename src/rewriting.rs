@@ -8,12 +8,15 @@ pub struct RewriteRule {
 }
 
 pub struct TermRewritingSystem {
-    rules: Vec<RewriteRule>
+    rules: Vec<RewriteRule>,
 }
 
 impl RewriteRule {
     pub fn new(lhs: &str, rhs: &str) -> Result<RewriteRule, ()> {
-        Ok(RewriteRule { lhs: parse_term(lhs)?, rhs: parse_term(rhs)? })
+        Ok(RewriteRule {
+            lhs: parse_term(lhs)?,
+            rhs: parse_term(rhs)?,
+        })
     }
 }
 
@@ -24,14 +27,14 @@ impl TermRewritingSystem {
 
     /// Rewrites the given term at its root with this TRS using the first matching rule.
     /// If no rules match, then this returns (unchanged term, false).
-    pub fn rewrite_at_root(&self, term: Term) -> (Term, bool) {
+    fn rewrite_at_root(&self, term: Term) -> (Term, bool) {
         for rule in &self.rules {
             if let Some(subst) = match_term(&rule.lhs, &term) {
-                return (apply_sub(&subst, &rule.rhs), true)
+                return (apply_sub(&subst, &rule.rhs), true);
             }
         }
 
-        return (term, false)
+        return (term, false);
     }
 
     /// Rewrites terms through DFS, one step only. If rewrite_at_root succeeds on a term, and its subterms are not looked at, and that rewritten term is returned.
@@ -62,7 +65,7 @@ impl TermRewritingSystem {
 
                     (Term::Function(f, modified_operands), any_changed)
                 }
-            }
+            },
         }
     }
 }

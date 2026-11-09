@@ -1,7 +1,7 @@
 use term_rewriter::{parser::parse_term, terms::Term};
 
 #[test]
-fn assert_valid_constants() {
+fn valid_constants() {
     assert_eq!(
         parse_term("a").unwrap(),
         Term::Function("a".to_string(), vec![])
@@ -29,7 +29,7 @@ fn assert_valid_constants() {
 }
 
 #[test]
-fn assert_malformed_constants() {
+fn malformed_constants() {
     assert!(parse_term("").is_err());
     assert!(parse_term("a b").is_err());
     assert!(parse_term("+").is_err());
@@ -38,7 +38,7 @@ fn assert_malformed_constants() {
 }
 
 #[test]
-fn assert_valid_variables() {
+fn valid_variables() {
     assert_eq!(parse_term("?a").unwrap(), Term::Variable("?a".to_string()));
     assert_eq!(
         parse_term("?_abcABC_123").unwrap(),
@@ -60,7 +60,7 @@ fn assert_valid_variables() {
 }
 
 #[test]
-fn assert_malformed_variables() {
+fn malformed_variables() {
     assert!(parse_term("?").is_err());
     assert!(parse_term("?a ?b").is_err());
     assert!(parse_term("?+").is_err());
@@ -70,7 +70,7 @@ fn assert_malformed_variables() {
 }
 
 #[test]
-fn assert_valid_functions() {
+fn valid_functions() {
     assert_eq!(
         parse_term("f()").unwrap(),
         Term::Function("f".to_string(), vec![])
@@ -147,7 +147,7 @@ fn assert_valid_functions() {
 }
 
 #[test]
-fn assert_malformed_functions() {
+fn malformed_functions() {
     assert!(parse_term("f(").is_err());
     assert!(parse_term("f())").is_err());
     assert!(parse_term("f(,)").is_err());

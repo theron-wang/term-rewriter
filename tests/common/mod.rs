@@ -1,10 +1,25 @@
-use term_rewriter::rewriting::{RewriteRule, TermRewritingSystem};
+use term_rewriter::{
+    parser::parse_term,
+    rewriting::{RewriteRule, TermRewritingSystem},
+    terms::Term,
+};
+
+/// Use instead of parse_term for brevity (to avoid having to call unwrap() each time)
+pub fn parse(term: &str) -> Term {
+    parse_term(term).unwrap()
+}
 
 /// Terminating, non-confluent TRS representing boolean operations.
-fn get_boolean_trs() -> TermRewritingSystem {
+/// Uses the following rules:
+/// 1. `not(not(?x))` -> `?x`
+/// 2. `not(and(?x, ?y)`) -> `or(not(?x), not(?y))`
+/// 3. `not(or(?x, ?y))` -> `and(not(?x), not(?y))`
+/// 4. `or(and(?x, ?y), ?z`) -> `and(or(?x, ?z), or(?y, ?z))`
+/// 5. `or(?x, and(?y, ?z))` -> `and(or(?x, ?y), or(?x, ?z))`
+pub fn get_boolean_trs() -> TermRewritingSystem {
     /*
     # Termination
-     
+
     Informally, this is terminating under this reduction order (using lexicographic path ordering; see Term Rewriting and All That § 5.4.2):
             Using: not > or > and
 
@@ -24,9 +39,9 @@ fn get_boolean_trs() -> TermRewritingSystem {
     => Since all rewrite rules are strictly decreasing under LPO, the TRS is terminating.
 
     # Local Confluence
-    
+
     If we can prove local confluence, we can use Newman's Lemma to prove confluence, since we already proved the TRS is terminating.
-    
+
     Overlapping terms:
     - R1 and R2: not(not(and(?x, ?y)))
         * Applying R1 --> and(?x, ?y)
@@ -46,22 +61,25 @@ fn get_boolean_trs() -> TermRewritingSystem {
     Since not all critical pairs are joinable, this TRS is not locally confluent, and thus not confluent.
     */
 
-    TermRewritingSystem::new(
-        vec![
-            // See https:en.wikipedia.org/wiki/Rewriting#Logic
-            RewriteRule::new("not(not(?x))", "?x").unwrap(),
-            // DeMorgan's Laws
-            RewriteRule::new("not(and(?x, ?y))", "or(not(?x), not(?y))").unwrap(),
-            RewriteRule::new("not(or(?x, ?y))", "and(not(?x), not(?y))").unwrap(),
-            // Others
-            RewriteRule::new("or(and(?x, ?y), ?z)", "and(or(?x, ?z), or(?y, ?z))").unwrap(),
-            RewriteRule::new("or(?x, and(?y, ?z))", "and(or(?x, ?y), or(?x, ?z))").unwrap()
-        ]
-    )
+    TermRewritingSystem::new(vec![
+        // See https:en.wikipedia.org/wiki/Rewriting#Logic
+        RewriteRule::new("not(not(?x))", "?x").unwrap(),
+        // DeMorgan's Laws
+        RewriteRule::new("not(and(?x, ?y))", "or(not(?x), not(?y))").unwrap(),
+        RewriteRule::new("not(or(?x, ?y))", "and(not(?x), not(?y))").unwrap(),
+        // Others
+        RewriteRule::new("or(and(?x, ?y), ?z)", "and(or(?x, ?z), or(?y, ?z))").unwrap(),
+        RewriteRule::new("or(?x, and(?y, ?z))", "and(or(?x, ?y), or(?x, ?z))").unwrap(),
+    ])
 }
 
 /// Terminating and confluent TRS representing arithmetic with addition and multiplication.
-fn get_arithmetic_trs() -> TermRewritingSystem {
+/// Uses the following rules:
+/// 1. `+(0, ?x)` -> `?x`
+/// 2. `*(0, ?x)` -> `0`
+/// 3. `+(?x, s(?y)`) -> `s(+(?x, ?y))`
+/// 4. `*(?x, s(?y))` -> `+(?x, *(?x, ?y))`
+pub fn get_arithmetic_trs() -> TermRewritingSystem {
     /*
     # Termination
 
@@ -95,33 +113,35 @@ fn get_arithmetic_trs() -> TermRewritingSystem {
     => Since all the critical pairs are joinable, this TRS is locally confluent.
     => Since this TRS is terminating and locally confluent, this TRS is confluent, by Newman's Lemma.
     */
-    TermRewritingSystem::new(
-        vec![
-            // See https:en.wikipedia.org/wiki/Rewriting#Arithmetic
-            RewriteRule::new("+(0, ?x)", "?x").unwrap(),
-            RewriteRule::new("*(0, ?x)", "0").unwrap(),
-            // x + (y + 1) == (x + y) + 1
-            RewriteRule::new("+(?x, s(?y))", "s(+(?x, ?y))").unwrap(),
-            // x * (y + 1) == x + x * y
-            RewriteRule::new("*(?x, s(?y))", "+(?x, *(?x, ?y))").unwrap()
-        ]
-    )
+    TermRewritingSystem::new(vec![
+        // See https:en.wikipedia.org/wiki/Rewriting#Arithmetic
+        RewriteRule::new("+(0, ?x)", "?x").unwrap(),
+        RewriteRule::new("*(0, ?x)", "0").unwrap(),
+        // x + (y + 1) == (x + y) + 1
+        RewriteRule::new("+(?x, s(?y))", "s(+(?x, ?y))").unwrap(),
+        // x * (y + 1) == x + x * y
+        RewriteRule::new("*(?x, s(?y))", "+(?x, *(?x, ?y))").unwrap(),
+    ])
 }
 
 /// Gets a simple term-rewriting system that is confluent but non-terminating.
-fn get_confluent_nonterminating_trs() -> TermRewritingSystem {
+/// Uses the following rules:
+/// 1. `f(?x, a)` -> `g(?x)`
+/// 2. `f(?x, a)` -> `h(?x)`
+/// 3. `g(?x)` -> `r(?x)`
+/// 4. `h(?x)` -> `r(?x)`
+/// 5. `r(?x)` -> `f(?x, a)`
+pub fn get_confluent_nonterminating_trs() -> TermRewritingSystem {
     //             +-- g(?x) --+
     // f(?x, a) -- |           | -- r(?x) -- f(?x, a)
     //             +-- h(?x) --+
     // By inspection, it is clear that this TRS is indeed confluent (they end back at f(?x, a)) but non-terminating, since
     // f(?x, a) can be infinitely rewritten as itself.
-    TermRewritingSystem::new(
-        vec![
-            RewriteRule::new("f(?x, a)", "g(?x)").unwrap(),
-            RewriteRule::new("f(?x, a)", "h(?x)").unwrap(),
-            RewriteRule::new("g(?x)", "r(?x)").unwrap(),
-            RewriteRule::new("h(?x)", "r(?x)").unwrap(),
-            RewriteRule::new("r(?x)", "f(?x, a)").unwrap()
-        ]
-    )
+    TermRewritingSystem::new(vec![
+        RewriteRule::new("f(?x, a)", "g(?x)").unwrap(),
+        RewriteRule::new("f(?x, a)", "h(?x)").unwrap(),
+        RewriteRule::new("g(?x)", "r(?x)").unwrap(),
+        RewriteRule::new("h(?x)", "r(?x)").unwrap(),
+        RewriteRule::new("r(?x)", "f(?x, a)").unwrap(),
+    ])
 }

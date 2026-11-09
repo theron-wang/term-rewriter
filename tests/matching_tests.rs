@@ -1,18 +1,18 @@
 use std::collections::HashMap;
-use term_rewriter::{matching::match_term, parser::parse_term, terms::Term};
+use term_rewriter::{matching::match_term, terms::Term};
+
+use crate::common::parse;
+
+#[allow(dead_code)]
+mod common;
 
 /// Helper method to simplify the creation of hashmaps in assert_eq! calls in this testing file.
 fn map_to<'a>(mappings: Vec<(&str, &'a Term)>) -> Option<HashMap<String, &'a Term>> {
     return Some(mappings.iter().map(|(a, b)| (a.to_string(), *b)).collect());
 }
 
-// Use instead of parse_term for brevity (to avoid unwrapping)
-fn parse(term: &str) -> Term {
-    parse_term(term).unwrap()
-}
-
 #[test]
-fn assert_match_simple_var_to_const() {
+fn match_simple_var_to_const() {
     let pattern = parse("?x");
     let term = parse("a");
 
@@ -21,7 +21,7 @@ fn assert_match_simple_var_to_const() {
 }
 
 #[test]
-fn assert_match_simple_var_to_func() {
+fn match_simple_var_to_func() {
     let pattern = parse("?x");
     let term = parse("f(a)");
 
@@ -30,7 +30,7 @@ fn assert_match_simple_var_to_func() {
 }
 
 #[test]
-fn assert_match_simple_var_to_var() {
+fn match_simple_var_to_var() {
     let pattern = parse("?x");
     let term = parse("?y");
 
@@ -39,7 +39,7 @@ fn assert_match_simple_var_to_var() {
 }
 
 #[test]
-fn assert_match_self() {
+fn match_self() {
     let pattern = parse("?x");
 
     let result = match_term(&pattern, &pattern);
@@ -47,7 +47,7 @@ fn assert_match_self() {
 }
 
 #[test]
-fn assert_match_self_constants() {
+fn match_self_constants() {
     let pattern = parse("a");
 
     let result = match_term(&pattern, &pattern);
@@ -55,7 +55,7 @@ fn assert_match_self_constants() {
 }
 
 #[test]
-fn assert_match_self_no_vars() {
+fn match_self_no_vars() {
     let pattern = parse("f(a, g(b))");
 
     let result = match_term(&pattern, &pattern);
@@ -63,7 +63,7 @@ fn assert_match_self_no_vars() {
 }
 
 #[test]
-fn assert_match_multiple_args() {
+fn match_multiple_args() {
     let pattern = parse("f(a, ?x, ?y, b)");
     let term = parse("f(a, g(a), h(a, ?x), b)");
 
@@ -75,7 +75,7 @@ fn assert_match_multiple_args() {
 }
 
 #[test]
-fn assert_match_repeated_vars() {
+fn match_repeated_vars() {
     let pattern = parse("f(a, ?x, ?x)");
     let term = parse("f(a, g(?y), g(?y))");
 
@@ -84,7 +84,7 @@ fn assert_match_repeated_vars() {
 }
 
 #[test]
-fn assert_match_repeated_vars_different_depths() {
+fn match_repeated_vars_different_depths() {
     let pattern = parse("f(a, ?x, g(?x))");
     let term = parse("f(a, g(?y), g(g(?y)))");
 
@@ -93,7 +93,7 @@ fn assert_match_repeated_vars_different_depths() {
 }
 
 #[test]
-fn assert_match_deep_nesting() {
+fn match_deep_nesting() {
     let pattern = parse("f(?x, g(h(?x), ?y), g(h(f1(?z, f2(?x)))))");
     let term = parse(
         "f(?x, g(h(?x), ?y), g(h(f1(?z, f2(?x)))))"
@@ -115,7 +115,7 @@ fn assert_match_deep_nesting() {
 }
 
 #[test]
-fn assert_reject_constant_to_variable() {
+fn reject_constant_to_variable() {
     let pattern = parse("a");
     let term = parse("?x");
 
@@ -123,7 +123,7 @@ fn assert_reject_constant_to_variable() {
 }
 
 #[test]
-fn assert_reject_function_to_variable() {
+fn reject_function_to_variable() {
     let pattern = parse("g(?x)");
     let term = parse("?x");
 
@@ -131,7 +131,7 @@ fn assert_reject_function_to_variable() {
 }
 
 #[test]
-fn assert_reject_mismatching_arity() {
+fn reject_mismatching_arity() {
     let pattern = parse("f(?x)");
     let term = parse("f(a, b)");
 
@@ -139,7 +139,7 @@ fn assert_reject_mismatching_arity() {
 }
 
 #[test]
-fn assert_reject_mismatching_function() {
+fn reject_mismatching_function() {
     let pattern = parse("f(?x)");
     let term = parse("g(a)");
 
@@ -147,7 +147,7 @@ fn assert_reject_mismatching_function() {
 }
 
 #[test]
-fn assert_reject_conflicting_matches() {
+fn reject_conflicting_matches() {
     let pattern = parse("f(?x, ?x)");
     let term = parse("f(a, b)");
 
@@ -155,7 +155,7 @@ fn assert_reject_conflicting_matches() {
 }
 
 #[test]
-fn assert_reject_conflicting_matches_complex() {
+fn reject_conflicting_matches_complex() {
     let pattern = parse("f(?x, g(?y), h(g(?x), f(f(f(?y)))))");
     let term = parse(
         "f(?x, g(?y), h(g(?x), f(f(f(?y)))))"
@@ -169,7 +169,7 @@ fn assert_reject_conflicting_matches_complex() {
 }
 
 #[test]
-fn assert_reject_mismatching_constants() {
+fn reject_mismatching_constants() {
     let pattern = parse("f(a, h(b, g(c)))");
     let term = parse("f(a, h(b, g(d)))");
 
