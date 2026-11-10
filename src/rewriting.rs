@@ -11,6 +11,12 @@ pub struct TermRewritingSystem {
     rules: Vec<RewriteRule>,
 }
 
+#[derive(PartialEq, Debug)]
+pub enum NormalizationResult {
+    Normalized(Term),
+    LimitExceeded(Term),
+}
+
 impl RewriteRule {
     pub fn new(lhs: &str, rhs: &str) -> Result<RewriteRule, ()> {
         Ok(RewriteRule {
@@ -66,6 +72,26 @@ impl TermRewritingSystem {
                     (Term::Function(f, modified_operands), any_changed)
                 }
             },
+        }
+    }
+
+    /// Normalizes a term for the given TRS, with a maximum rewrite count for non-terminating TRSes.
+    pub fn normalize(&self, mut term: Term, max_rewrites: usize) -> NormalizationResult {
+        let mut norms = 0;
+        loop {
+            if norms >= max_rewrites && max_rewrites > 0 {
+                return NormalizationResult::LimitExceeded(term);
+            }
+
+            let (rewritten_term, modified) = self.rewrite(term);
+
+            if !modified {
+                return NormalizationResult::Normalized(rewritten_term);
+            }
+
+            term = rewritten_term;
+
+            norms += 1;
         }
     }
 }
