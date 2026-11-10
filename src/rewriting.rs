@@ -79,7 +79,7 @@ impl TermRewritingSystem {
     pub fn normalize(&self, mut term: Term, max_rewrites: usize) -> NormalizationResult {
         let mut norms = 0;
         loop {
-            if norms >= max_rewrites && max_rewrites > 0 {
+            if norms >= max_rewrites {
                 return NormalizationResult::LimitExceeded(term);
             }
 
@@ -92,6 +92,18 @@ impl TermRewritingSystem {
             term = rewritten_term;
 
             norms += 1;
+        }
+    }
+
+    /// Returns true if the two terms are equal (based on their normalizations), given a rewrite limit.
+    /// Terms that fail to normalize makes this function return false.
+    pub fn are_equal(&self, term1: Term, term2: Term, max_rewrites: usize) -> bool {
+        let first = self.normalize(term1, max_rewrites);
+        let second = self.normalize(term2, max_rewrites);
+
+        match (first, second) {
+            (NormalizationResult::Normalized(first), NormalizationResult::Normalized(second)) => first == second,
+            _ => false
         }
     }
 }

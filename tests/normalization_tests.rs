@@ -62,3 +62,30 @@ fn fail_to_normalize_with_limit_0() {
         NormalizationResult::LimitExceeded(parse("a"))
     );
 }
+
+#[test]
+fn equal_arithmetic_terms() {
+    let trs = get_arithmetic_trs();
+
+    assert!(
+        trs.are_equal(parse("+(0, *(0, a))"), parse("*(0, *(+(a, s(b)), s(c)))"), 100)
+    )
+}
+
+#[test]
+fn equal_boolean_terms() {
+    let trs = get_boolean_trs();
+
+    assert!(
+        trs.are_equal(parse("not(and(true, true))"), parse("or(not(not(not(true))), not(not(not(not(not(true))))))"), 100)
+    )
+}
+
+#[test]
+fn unequal_confluence_terms() {
+    let trs = get_confluent_nonterminating_trs();
+
+    assert!(
+        !trs.are_equal(parse("g(a)"), parse("h(a)"), 10)
+    );
+}
