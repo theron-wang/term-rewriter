@@ -77,7 +77,7 @@ let parsed: Result<Term, ()> = term_rewriter::parser::parse_term("term");
 
 // Pattern Matching
 let (pattern, term): (Term, Term) = ...;
-let matched: Result<Term, ()> = term_rewriter::matching::match_term(pattern_term);
+let matched: Option<HashMap<String, &Term>> = term_rewriter::matching::match_term(pattern_term);
 
 // Term Rewriting
 let rewritten: RewriteResult = trs.rewrite(term);
