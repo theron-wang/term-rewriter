@@ -1,5 +1,4 @@
 /// The core rewriting logic is tested in rewriting_tests. Here, we just check to see if normalize works as expected.
-
 use term_rewriter::rewriting::NormalizationResult;
 
 use crate::common::{get_arithmetic_trs, get_boolean_trs, get_confluent_nonterminating_trs, parse};
@@ -67,25 +66,27 @@ fn fail_to_normalize_with_limit_0() {
 fn equal_arithmetic_terms() {
     let trs = get_arithmetic_trs();
 
-    assert!(
-        trs.are_equal(parse("+(0, *(0, a))"), parse("*(0, *(+(a, s(b)), s(c)))"), 100)
-    )
+    assert!(trs.are_equal(
+        parse("+(0, *(0, a))"),
+        parse("*(0, *(+(a, s(b)), s(c)))"),
+        100
+    ))
 }
 
 #[test]
 fn equal_boolean_terms() {
     let trs = get_boolean_trs();
 
-    assert!(
-        trs.are_equal(parse("not(and(true, true))"), parse("or(not(not(not(true))), not(not(not(not(not(true))))))"), 100)
-    )
+    assert!(trs.are_equal(
+        parse("not(and(true, true))"),
+        parse("or(not(not(not(true))), not(not(not(not(not(true))))))"),
+        100
+    ))
 }
 
 #[test]
 fn unequal_confluence_terms() {
     let trs = get_confluent_nonterminating_trs();
 
-    assert!(
-        !trs.are_equal(parse("g(a)"), parse("h(a)"), 10)
-    );
+    assert!(!trs.are_equal(parse("g(a)"), parse("h(a)"), 10));
 }
