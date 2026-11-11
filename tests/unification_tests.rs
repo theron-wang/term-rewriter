@@ -31,6 +31,8 @@ fn unification_simple() {
 
 #[test]
 fn unification_identity() {
+    assert_eq!(unify(parse("?x"), parse("?x")), map_to(vec![]));
+
     assert_eq!(
         unify(parse("f(a, ?x, b)"), parse("f(a, ?x, b)")),
         map_to(vec![])

@@ -1,6 +1,6 @@
 use std::fmt;
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Debug, Clone, Hash, Eq)]
 pub enum Term {
     Variable(String),
     Function(String, Vec<Term>),

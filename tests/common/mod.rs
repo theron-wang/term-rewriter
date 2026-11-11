@@ -12,9 +12,9 @@ pub fn parse(term: &str) -> Term {
 /// Terminating, non-confluent TRS representing boolean operations.
 /// Uses the following rules:
 /// 1. `not(not(?x))` -> `?x`
-/// 2. `not(and(?x, ?y)`) -> `or(not(?x), not(?y))`
+/// 2. `not(and(?x, ?y))` -> `or(not(?x), not(?y))`
 /// 3. `not(or(?x, ?y))` -> `and(not(?x), not(?y))`
-/// 4. `or(and(?x, ?y), ?z`) -> `and(or(?x, ?z), or(?y, ?z))`
+/// 4. `or(and(?x, ?y), ?z)` -> `and(or(?x, ?z), or(?y, ?z))`
 /// 5. `or(?x, and(?y, ?z))` -> `and(or(?x, ?y), or(?x, ?z))`
 pub fn get_boolean_trs() -> TermRewritingSystem {
     /*

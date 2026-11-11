@@ -1,14 +1,14 @@
-use std::collections::HashMap;
+use std::{borrow::Borrow, collections::HashMap};
 
 use crate::{matching::match_term, parser::parse_term, terms::Term};
 
-pub struct RewriteRule {
-    lhs: Term,
-    rhs: Term,
+pub struct TermRewritingSystem {
+    pub(crate) rules: Vec<RewriteRule>,
 }
 
-pub struct TermRewritingSystem {
-    rules: Vec<RewriteRule>,
+pub struct RewriteRule {
+    pub lhs: Term,
+    pub rhs: Term,
 }
 
 #[derive(PartialEq, Debug)]
@@ -127,26 +127,44 @@ impl TermRewritingSystem {
 
 /// For a map of substitutions (?x -> <term>, ?y -> <term>, ...) and a term, replace all instances of the variables in the map with their
 /// substitutions, and return a cloned term.
-pub fn apply_sub<'a>(substitutions: &HashMap<String, &Term>, term: Term) -> Term {
-    apply_sub_impl(&|var| substitutions.get(var).copied(), term)
+pub fn apply_sub<T>(substitutions: &HashMap<String, T>, term: Term) -> Term
+where
+    T: Borrow<Term>,
+{
+    apply_sub_impl(&|var| substitutions.get(var).map(Borrow::borrow), term)
 }
 
 /// For a single substitution (?x -> <term>) and a term, replace all instances of the variable with its substitution, returning a clone.
-pub fn apply_sub_single<'a>((sub_var, sub): (&str, &Term), term: Term) -> Term {
-    apply_sub_impl(&|var| if var == sub_var { Some(sub) } else { None }, term)
+pub fn apply_sub_single<T>((sub_var, sub): (&str, T), term: Term) -> Term
+where
+    T: Borrow<Term>,
+{
+    apply_sub_impl(
+        &|var| {
+            if var == sub_var {
+                Some(sub.borrow())
+            } else {
+                None
+            }
+        },
+        term,
+    )
 }
 
-fn apply_sub_impl<'a, T: Fn(&str) -> Option<&'a Term>>(substitutions: &T, term: Term) -> Term {
+fn apply_sub_impl<'a, T>(substitutions: &T, term: Term) -> Term
+where
+    T: Fn(&str) -> Option<&'a Term>,
+{
     match term {
         Term::Variable(ref var) => {
             if let Some(substitution) = substitutions(var) {
-                (*substitution).clone()
+                substitution.clone()
             } else {
                 term
             }
         }
         Term::Function(f, operands) => Term::Function(
-            f.to_string(),
+            f,
             operands
                 .into_iter()
                 .map(|op| apply_sub_impl(substitutions, op))
