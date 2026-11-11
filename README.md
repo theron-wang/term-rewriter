@@ -6,11 +6,11 @@ This is an educational project based on the theory and algorithms from _Term Rew
 
 ## Setup
 
-To set up, simply run `cargo test` if you already have Rust installed. There are no dependencies required. This project is not runnable.
+If you already have Rust installed, you can simply run `cargo test` to run all tests. There are no dependencies required. Note that this project is not runnable as a standalone.
 
 ## Project Structure
 
-The implementation for the term rewriter can be found in `src/`. Tests demonstrating each feature can be found in `tests/`. For some sample TRSes and their proofs for confluence and termination, please check out `tests/common/mod.rs`.
+The implementation for the term rewriter can be found in `src/`. Tests demonstrating each feature can be found in `tests/`. For some sample TRSes and their respective proofs for confluence and termination, please check out `tests/common/mod.rs`.
 
 ## Features
 
@@ -18,12 +18,12 @@ The implementation for the term rewriter can be found in `src/`. Tests demonstra
 
 This project uses a simple grammar to parse text into terms. There are two types of terms: functions and variables. Functions can be of arity 0 or greater; a "constant" is simply a function of arity 0.
 
-Functions and variables are parsed based on _identifiers_; that is, a continuous alphanumeric string (or consisting of underscores) with no whitespace, which can start with digits. Functions also use _operators_, which are `+`, `-`, `*`, and `/`. Functions with no parentheses are assumed to have no subterms.
+Functions and variables are parsed largely based on _identifiers_; that is, an alphanumeric string (including `_`) with no whitespace (identifiers can start with digits). Functions also use _operators_, which are `+`, `-`, `*`, and `/`. Functions with no parentheses are assumed to have no subterms.
 
 ```
 <term>: <function>|<variable>
 <variable>: ?[identifier]
-<function>: [identifier|operator] | [identifier|operator](<term1>, <term2>, ...)
+<function>: [identifier|operator] | [identifier|operator](<term>, <term>, ...)
 ```
 
 ### Pattern Matching
@@ -32,7 +32,7 @@ Given a pattern `p` and a term `t`, matching finds a substitution such that `σp
 
 ### Term Rewriting
 
-The current term rewriter applies at most one rewrite on each call. It uses a root-first approach--i.e., the root is checked first against all rules, and then the subterms recursively. As soon as the root/any subterm matches a rule's left-hand side, the right-hand side of the rule (with the substitution mapping from pattern matching applied) is used to overwrite the matching term.
+The current term rewriter applies at most one rewrite on each call. It uses a root-first approach -- i.e., the root is checked first against all rules, and then the subterms recursively. As soon as the root/any subterm matches a rule's left-hand side, the right-hand side of the rule (with the substitution mapping from pattern matching applied) is used to overwrite the matching term.
 
 ### Normalization
 
@@ -41,18 +41,18 @@ Normalization is a loop of rewrites until no more rules can be matched. There is
 ### Unification
 
 Unification finds a substitution such that `σs = σt`. Compared to pattern matching, the left-hand term is no longer treated as static. This implementation finds a most general unifier (mgu), using four operations applied until none can no longer be applied:
-- Deletion: deleting trivial substitutions (?x -> ?x)
-- Orient: moving variables to the LHS (t -> ?x becomes ?x -> t)
-- Decompose: solving equality relationships based on subterms (f(t1, t2, ...) = f(s1, s2, ...) becomes t1 = s1, t2 = s2, ...)
-- Eliminate: once a variable's value is found, then replace all instances of that variable with the discovered mapping (if we find x -> a, then replace f(?x) to f(a), etc.)
+- Deletion: deleting trivial substitutions (`?x` -> `?x`)
+- Orient: moving variables to the LHS (`t` -> `?x` becomes `?x` -> `t`)
+- Decompose: solving equality relationships based on subterms (`f(t1, t2, ...)` = `f(s1, s2, ...)` becomes `t1` = `s1`, `t2` = `s2`, ...)
+- Eliminate: once a variable's value is found, then replace all instances of that variable with the discovered mapping (if we find `x` -> `a`, then replace `?x` such that `f(?x)` becomes `f(a)`, etc.)
 
 Two auxiliary checks are also performed to return a unification failure early:
-- Clash: mismatching functions or arities (f = g, f(t) = f(t1, t2))
-- Occurs-Check: if ?x -> s, then ?x ∈ Var(s) means that unification is not possible
+- Clash: mismatching functions or arities (`f` = `g`, `f(t)` = `f(t1, t2)`)
+- Occurs-Check: if `?x` -> `s`, then `?x ∈ Var(s)` means that unification is not possible
 
 ### Critical Pair Generation
 
-Critical pairs can be useful for proving local confluence, which can be used to prove confluence if the TRS is terminating (Newman's Lemma). A critical pair can be found through overlapping terms--a term in which two left-hand sides of the TRS can match. The distinct terms after applying each matching rewrite gives you a critical pair. In short, processing each individual rule requires renames of all its variables to unique names to avoid conflicts with other rules (since we start with the assumption that all rules are independent), and we unify the left-hand side and its subterms with other rules' left-hand sides, and successful unification substitutions are applied to the original rule's right-hand side and the other rule's right-hand side to create a critical pair. Contexts are preserved to ensure that the original structure is also preserved.
+Critical pairs can be useful for proving local confluence, which can be used to prove confluence if the TRS is terminating (Newman's Lemma). A critical pair can be found through overlapping terms -- a term in which two left-hand sides of the TRS can match. The distinct terms after applying each matching rewrite gives you a critical pair. In short, processing each individual rule requires renames of all its variables to unique names to avoid conflicts with other rules (since we start with the assumption that all rules are independent), and we unify the left-hand side and its subterms with other rules' left-hand sides, and successful unification substitutions are applied to the original rule's right-hand side and the other rule's right-hand side to create a critical pair. Contexts are preserved to ensure that the original structure is also preserved.
 
 ## Usage
 
@@ -98,4 +98,4 @@ let critical_pairs: Vec<(Term, Term)> = trs.critical_pairs();
 
 Baader, F., & Nipkow, T. (1998). [_Term Rewriting and All That_](https://doi.org/10.1017/CBO9781139172752). Cambridge University Press.
 
-[The Rust Programming Language](https://doc.rust-lang.org/book/) — Rust language documentation and learning resource.
+[The Rust Programming Language](https://doc.rust-lang.org/book/) - Rust language documentation and learning resource.
