@@ -1,6 +1,9 @@
 use std::collections::HashSet;
 
-use term_rewriter::{rewriting::{RewriteRule, TermRewritingSystem}, terms::Term};
+use term_rewriter::{
+    rewriting::{RewriteRule, TermRewritingSystem},
+    terms::Term,
+};
 
 use crate::common::{get_arithmetic_trs, get_boolean_trs, get_confluent_nonterminating_trs, parse};
 
@@ -16,8 +19,7 @@ fn to_hashset(tuples: Vec<(Term, Term)>) -> HashSet<(Term, Term)> {
 fn pretty_print(left: &Vec<(Term, Term)>, right: &Vec<(Term, Term)>) {
     println!(
         "left: {:#?}",
-        left
-            .iter()
+        left.iter()
             .map(|(a, b)| (a.to_string(), b.to_string()))
             .collect::<Vec<(String, String)>>()
     );
@@ -107,12 +109,10 @@ fn calculate_all_confluent_nonterminating_trs_critical_pairs() {
 
 #[test]
 fn no_critical_pairs() {
-    let trs = TermRewritingSystem::new(
-        vec![
-            RewriteRule::new("f(?x)", "g(?x)").unwrap(),
-            RewriteRule::new("h(?x)", "k(?x)").unwrap(),
-        ]
-    );
+    let trs = TermRewritingSystem::new(vec![
+        RewriteRule::new("f(?x)", "g(?x)").unwrap(),
+        RewriteRule::new("h(?x)", "k(?x)").unwrap(),
+    ]);
 
     let calculated = trs.critical_pairs();
     let expected = vec![];

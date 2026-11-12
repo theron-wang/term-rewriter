@@ -32,11 +32,19 @@ Given a pattern `p` and a term `t`, matching finds a substitution such that `σp
 
 ### Term Rewriting
 
-The current term rewriter applies at most one rewrite on each call. It uses a root-first approach -- i.e., the root is checked first against all rules, and then the subterms recursively. As soon as the root/any subterm matches a rule's left-hand side, the right-hand side of the rule (with the substitution mapping from pattern matching applied) is used to overwrite the matching term.
+The current term rewriter has two distinct rewrite methods: `rewrite` and `rewrite_all`.
+
+#### `rewrite`
+
+This rewrite method applies at most one rewrite on each call. It uses a root-first approach -- i.e., the root is checked first against all rules, and then the subterms recursively. As soon as the root/any subterm matches a rule's left-hand side, the right-hand side of the rule (with the substitution mapping from pattern matching applied) is used to overwrite the matching term.
+
+#### `rewrite_all`
+
+This rewrite method applies all applicable rewrites on a term, returning it in a vector. The order of the rewritten terms is determined by traversal from the root, and from left to right. Each term in the resulting vector has one single rewrite applied.
 
 ### Normalization
 
-Normalization is a loop of rewrites until no more rules can be matched. There is a rewrite limit in this term rewriter that allows for inconclusive termination in the case of non-terminating TRSes, which it does not support.
+Normalization is a loop of rewrites until no more rules can be matched. There is a rewrite limit in this term rewriter that allows for inconclusive termination in the case of non-terminating TRSes, which `normalize` does not support, but `normalize_all` does. `normalize_all` finds the normal form in a confluent TRS, and all normal forms in a nonconfluent TRS.
 
 ### Unification
 
@@ -81,10 +89,12 @@ let matched: Option<HashMap<String, &Term>> = term_rewriter::matching::match_ter
 
 // Term Rewriting
 let rewritten: RewriteResult = trs.rewrite(term);
+let all_rewrites: Vec<Term> = trs.rewrite_all(&term);
 
 // Normalization
 let max_rewrites: usize = ...;
 let normalized: NormalizationResult = trs.normalize(term, max_rewrites);
+let (found_all_norms, found_normalizations): (bool, HashSet<Term>) = trs.normalize_all(term, max_rewrites);
 
 // Unification
 let (term1, term2): (Term, Term) = ...;

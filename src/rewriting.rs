@@ -1,4 +1,8 @@
-use std::{borrow::Borrow, collections::HashMap};
+use std::{
+    borrow::Borrow,
+    collections::{HashMap, HashSet},
+    iter,
+};
 
 use crate::{matching::match_term, parser::parse_term, terms::Term};
 
@@ -38,7 +42,6 @@ impl TermRewritingSystem {
     }
 
     /// Rewrites the given term at its root with this TRS using the first matching rule.
-    /// If no rules match, then this returns (unchanged term, false).
     fn rewrite_at_root(&self, term: Term) -> RewriteResult {
         for rule in &self.rules {
             if let Some(subst) = match_term(&rule.lhs, &term) {
@@ -50,8 +53,7 @@ impl TermRewritingSystem {
     }
 
     /// Rewrites terms through DFS, one step only. If rewrite_at_root succeeds on a term, and its subterms are not looked at, and that rewritten term is returned.
-    /// If no rules apply to a term, call rewrite on each of its subterms, until one of them is rewritten successfully. If no rules match, then
-    /// this returns (unchanged term, false).
+    /// If no rules apply to a term, call rewrite on each of its subterms, until one of them is rewritten successfully.
     pub fn rewrite(&self, term: Term) -> RewriteResult {
         match self.rewrite_at_root(term) {
             RewriteResult::Rewritten(root) => RewriteResult::Rewritten(root),
@@ -90,6 +92,46 @@ impl TermRewritingSystem {
         }
     }
 
+    /// Rewrites the given term at its root with this TRS using all matching rules.
+    fn rewrite_all_at_root(&self, term: &Term) -> Vec<Term> {
+        let mut result = Vec::new();
+
+        for rule in &self.rules {
+            if let Some(subst) = match_term(&rule.lhs, term) {
+                result.push(apply_sub(&subst, rule.rhs.clone()));
+            }
+        }
+
+        result
+    }
+
+    /// Given a term, return a vector of all one-step rewrites that apply to the root or any subterm. Returns an empty list if no rewrites could
+    /// be applied. Does not take ownership of the term, by design, so if the given term did not yield any rewrites, then callers can still use that value.
+    pub fn rewrite_all(&self, term: &Term) -> Vec<Term> {
+        let mut result = self.rewrite_all_at_root(term);
+
+        match term {
+            Term::Variable(_) => (),
+            Term::Function(f, operands) => {
+                for (i, op) in operands.iter().enumerate() {
+                    result.extend(self.rewrite_all(op).into_iter().map(|rewritten| {
+                        Term::Function(
+                            f.clone(),
+                            operands[..i]
+                                .iter()
+                                .cloned()
+                                .chain(iter::once(rewritten))
+                                .chain(operands[i + 1..].iter().cloned())
+                                .collect(),
+                        )
+                    }));
+                }
+            }
+        };
+
+        result
+    }
+
     /// Normalizes a term for the given TRS, with a maximum rewrite count for non-terminating TRSes.
     pub fn normalize(&self, mut term: Term, max_rewrites: usize) -> NormalizationResult {
         let mut norms = 0;
@@ -108,6 +150,38 @@ impl TermRewritingSystem {
                 }
             }
         }
+    }
+
+    /// Returns all normalizations of a term, given a maximum number of steps. A step is a calculation of all rewrites of
+    /// any given term. The first bool in the output refers to whether all normal forms were found; it is false if a limit was reached.
+    pub fn normalize_all(&self, term: Term, max_steps: usize) -> (bool, HashSet<Term>) {
+        let mut norms = 0;
+        let mut result = HashSet::new();
+        let mut visited = HashSet::new();
+
+        let mut worklist = vec![term];
+
+        while let Some(work_on) = worklist.pop() {
+            if norms >= max_steps {
+                return (false, result);
+            }
+
+            if !visited.insert(work_on.clone()) {
+                continue;
+            }
+
+            let mut rewrites = self.rewrite_all(&work_on);
+
+            if rewrites.is_empty() {
+                result.insert(work_on);
+            } else {
+                worklist.append(&mut rewrites);
+            }
+
+            norms += 1;
+        }
+
+        (true, result)
     }
 
     /// Returns true if the two terms are equal (based on their normalizations), given a rewrite limit.

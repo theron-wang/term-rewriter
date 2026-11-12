@@ -86,11 +86,11 @@ fn rewrite_arithmetic_complex() {
     let trs = get_arithmetic_trs();
 
     assert_eq!(
-        trs.rewrite(parse("+(*(+(0, 0), s(a, b)), +(s(0), s(s(s(0)))))")),
-        RewriteResult::Rewritten(parse("+(*(0, s(a, b)), +(s(0), s(s(s(0)))))"))
+        trs.rewrite(parse("+(*(+(0, 0), f(a)), +(s(0), s(s(s(0)))))")),
+        RewriteResult::Rewritten(parse("+(*(0, f(a)), +(s(0), s(s(s(0)))))"))
     );
     assert_eq!(
-        trs.rewrite(parse("+(*(0, s(a, b)), +(s(0), s(s(s(0)))))")),
+        trs.rewrite(parse("+(*(0, f(a)), +(s(0), s(s(s(0)))))")),
         RewriteResult::Rewritten(parse("+(0, +(s(0), s(s(s(0)))))"))
     );
     assert_eq!(
@@ -173,4 +173,80 @@ fn rewrite_nonterminating_confluent() {
         trs.rewrite(parse("r(b)")),
         RewriteResult::Rewritten(parse("f(b, a)"))
     );
+}
+
+#[test]
+fn rewrite_all_arithmetic_complex() {
+    let trs = get_arithmetic_trs();
+
+    assert_eq!(
+        trs.rewrite_all(&parse("+(*(+(0, 0), f(a)), +(s(0), s(s(s(0)))))")),
+        Vec::from([
+            parse("+(*(0, f(a)), +(s(0), s(s(s(0)))))"),
+            parse("+(*(+(0, 0), f(a)), s(+(s(0), s(s(0)))))"),
+        ])
+    );
+
+    // Only test the first rewrites of each term to ensure matching behavior to rewrite_arithmetic_complex()
+    assert_eq!(
+        trs.rewrite_all(&parse("+(*(0, f(a)), +(s(0), s(s(s(0)))))")),
+        Vec::from([
+            parse("+(0, +(s(0), s(s(s(0)))))"),
+            parse("+(*(0, f(a)), s(+(s(0), s(s(0)))))"),
+        ])
+    );
+
+    assert_eq!(
+        trs.rewrite_all(&parse("+(0, +(s(0), s(s(s(0)))))")),
+        Vec::from([
+            parse("+(s(0), s(s(s(0))))"),
+            parse("+(0, s(+(s(0), s(s(0)))))"),
+        ])
+    );
+
+    assert_eq!(
+        trs.rewrite_all(&parse("+(s(0), s(s(s(0))))")),
+        Vec::from([parse("s(+(s(0), s(s(0))))")])
+    );
+
+    // ... The rest following this branch are trivial
+
+    // Now, try rewriting the second term of the original rewrite
+    assert_eq!(
+        trs.rewrite_all(&parse("+(*(+(0, 0), f(a)), s(+(s(0), s(s(0)))))")),
+        Vec::from([
+            parse("s(+(*(+(0, 0), f(a)), +(s(0), s(s(0)))))"),
+            parse("+(*(0, f(a)), s(+(s(0), s(s(0)))))"),
+            parse("+(*(+(0, 0), f(a)), s(s(+(s(0), s(0)))))"),
+        ])
+    );
+
+    // This time, we'll test the second rewrites
+    assert_eq!(
+        trs.rewrite_all(&parse("+(*(0, f(a)), s(+(s(0), s(s(0)))))")),
+        Vec::from([
+            parse("s(+(*(0, f(a)), +(s(0), s(s(0)))))"),
+            parse("+(0, s(+(s(0), s(s(0)))))"),
+            parse("+(*(0, f(a)), s(s(+(s(0), s(0)))))"),
+        ])
+    );
+
+    assert_eq!(
+        trs.rewrite_all(&parse("+(0, s(+(s(0), s(s(0)))))")),
+        Vec::from([
+            parse("s(+(s(0), s(s(0))))"),
+            parse("s(+(0, +(s(0), s(s(0)))))"),
+            parse("+(0, s(s(+(s(0), s(0)))))"),
+        ])
+    );
+
+    assert_eq!(
+        trs.rewrite_all(&parse("s(+(0, +(s(0), s(s(0)))))")),
+        Vec::from([
+            parse("s(+(s(0), s(s(0))))"),
+            parse("s(+(0, s(+(s(0), s(0)))))")
+        ])
+    );
+
+    // ...
 }

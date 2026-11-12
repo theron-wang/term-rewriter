@@ -1,5 +1,7 @@
+use std::collections::HashSet;
+
 /// The core rewriting logic is tested in rewriting_tests. Here, we just check to see if normalize works as expected.
-use term_rewriter::rewriting::NormalizationResult;
+use term_rewriter::rewriting::{NormalizationResult, RewriteRule, TermRewritingSystem};
 
 use crate::common::{get_arithmetic_trs, get_boolean_trs, get_confluent_nonterminating_trs, parse};
 
@@ -89,4 +91,49 @@ fn unequal_confluence_terms() {
     let trs = get_confluent_nonterminating_trs();
 
     assert!(!trs.are_equal(parse("g(a)"), parse("h(a)"), 10));
+}
+
+#[test]
+fn all_normalizations_to_confluent_system() {
+    let trs = get_arithmetic_trs();
+
+    assert_eq!(
+        trs.normalize_all(parse("+(*(+(0, 0), f(a)), +(s(0), s(s(s(0)))))"), 100),
+        (true, HashSet::from([parse("s(s(s(+(s(0), 0))))")]))
+    );
+}
+
+#[test]
+fn all_normalizations_to_non_confluent_system() {
+    let trs = get_boolean_trs();
+
+    assert_eq!(
+        trs.normalize_all(parse("not(or(and(?x, ?y), ?z))"), 100),
+        (
+            true,
+            HashSet::from([
+                parse("and(or(not(?x), not(?y)), not(?z))"),
+                parse(
+                    "and(and(or(not(?x), not(?y)), or(not(?x), not(?z))), and(or(not(?z), not(?y)), or(not(?z), not(?z))))"
+                ),
+                parse(
+                    "and(and(or(not(?x), not(?y)), or(not(?z), not(?y))), and(or(not(?x), not(?z)), or(not(?z), not(?z))))"
+                )
+            ])
+        )
+    );
+}
+
+#[test]
+fn normalization_on_nonconfluent_nonterminating_system() {
+    let trs = TermRewritingSystem::new(vec![
+        RewriteRule::new("a", "b").unwrap(),
+        RewriteRule::new("b", "a").unwrap(),
+        RewriteRule::new("a", "c").unwrap(),
+    ]);
+
+    assert_eq!(
+        trs.normalize_all(parse("a"), 10),
+        (true, HashSet::from([parse("c")]))
+    );
 }
