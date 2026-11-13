@@ -1,6 +1,6 @@
 # Term Rewriter
 
-A term rewriting system (TRS) implemented in Rust, supporting term parsing, pattern matching, term rewriting, normalization, unification, and critical pair generation.
+A term rewriter implemented in Rust, supporting term parsing, pattern matching, term rewriting, normalization, unification, and critical pair generation.
 
 This is an educational project based on the theory and algorithms from _Term Rewriting and All That_.
 
@@ -28,7 +28,7 @@ Functions and variables are parsed largely based on _identifiers_; that is, an a
 
 ### Pattern Matching
 
-Given a pattern `p` and a term `t`, matching finds a substitution such that `σp = t`. That is, the implementation finds a `HashMap` of variables to terms such applying that map to the pattern will result in the term.
+Given a pattern `p` and a term `t`, matching finds a substitution such that `σp = t`. That is, the implementation finds a `HashMap` of variables to terms such that applying the map to `p` will result in `t`.
 
 ### Term Rewriting
 
@@ -60,7 +60,9 @@ Two auxiliary checks are also performed to return a unification failure early:
 
 ### Critical Pair Generation
 
-Critical pairs can be useful for proving local confluence, which can be used to prove confluence if the TRS is terminating (Newman's Lemma). A critical pair can be found through overlapping terms -- a term in which two left-hand sides of the TRS can match. The distinct terms after applying each matching rewrite gives you a critical pair. In short, processing each individual rule requires renames of all its variables to unique names to avoid conflicts with other rules (since we start with the assumption that all rules are independent), and we unify the left-hand side and its subterms with other rules' left-hand sides, and successful unification substitutions are applied to the original rule's right-hand side and the other rule's right-hand side to create a critical pair. Contexts are preserved to ensure that the original structure is also preserved.
+Critical pairs can be useful for proving local confluence, which can be used to prove confluence if the TRS is terminating, by Newman's Lemma. A critical pair can be found through overlapping terms -- a term in which two left-hand sides of the TRS can match. The distinct terms after applying each matching rewrite gives you a critical pair.
+
+In short, the algorithm works as such. Each individual rule requires renames of all its variables to unique names to avoid conflicts with other rules (since we start with the assumption that all rules are independent), and we unify the left-hand side and its subterms with other rules' left-hand sides, and successful unification substitutions are applied to the original rule's right-hand side and the other rule's right-hand side to create a critical pair. Contexts are preserved to ensure that the original structure is also preserved.
 
 ## Usage
 
